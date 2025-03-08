@@ -1,6 +1,6 @@
 # CHIP-8 Interpreter 
 
-An interpreter for the [CHIP-8](https://en.wikipedia.org/wiki/CHIP-8) programming language, utilizing SDL2 for audio, input and graphics. Currently, only support for the original COSMAC VIP CHIP-8 is planned, but other variants may be added in the future after the base is done.
+An interpreter for the [CHIP-8](https://en.wikipedia.org/wiki/CHIP-8) programming language, utilizing SDL3 for audio, input and graphics. Currently, only support for the original COSMAC VIP CHIP-8 is planned, but other variants may be added in the future after the base is done.
 
 # Usage
 

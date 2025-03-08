@@ -1,14 +1,14 @@
 #include <iostream>
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include <getopt.h>
 #include "chip8.h"
 
 int main(int argc, char *argv[]) {
-    char c;
+    int c;
     int ipf = 11;
     bool debug = false;
     bool exit_on_unknown = true;
-    SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_TIMER);
+    SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS);
 
     const struct option longopts[] = {
             {"exit-on-unknown", required_argument, nullptr, 'e'},
@@ -36,7 +36,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (argc - optind != 1) {
-        SDL_Log("Usage: ./chip8 input.ch8");
+        std::cerr << "Usage: ./chip8 [options] input.ch8\n";
         return 0;
     }
     Chip8 chip8(argv[optind++], debug, exit_on_unknown);

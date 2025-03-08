@@ -3,14 +3,12 @@
 
 Screen::Screen() {
     window = SDL_CreateWindow("CHIP-8",
-                              SDL_WINDOWPOS_CENTERED,
-                              SDL_WINDOWPOS_CENTERED,
                               WINDOW_WIDTH,
                               WINDOW_HEIGHT, 0);
-    renderer = SDL_CreateRenderer(window, -1, 0);
+    renderer = SDL_CreateRenderer(window, nullptr);
 
     //setting the logical size lets us just treat it as a 64 x 32 display, and it will automatically scale it up
-    SDL_RenderSetLogicalSize(renderer, LOGICAL_WIDTH, LOGICAL_HEIGHT);
+    SDL_SetRenderLogicalPresentation(renderer, LOGICAL_WIDTH, LOGICAL_HEIGHT, SDL_LOGICAL_PRESENTATION_LETTERBOX);
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
 
@@ -19,6 +17,7 @@ Screen::Screen() {
                                 SDL_TEXTUREACCESS_STREAMING,
                                 LOGICAL_WIDTH,
                                 LOGICAL_HEIGHT);
+    SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_NEAREST);
 }
 
 Screen::~Screen() {
@@ -39,13 +38,13 @@ void Screen::draw(uint8_t *display) {
         }
     }
 
-    SDL_UpdateTexture(texture, NULL, screen, LOGICAL_WIDTH * sizeof(uint32_t));
-    SDL_Rect position;
+    SDL_UpdateTexture(texture, nullptr, screen, LOGICAL_WIDTH * sizeof(uint32_t));
+    SDL_FRect position;
     position.x = 0;
     position.y = 0;
 
     position.w = LOGICAL_WIDTH;
     position.h = LOGICAL_HEIGHT;
-    SDL_RenderCopy(renderer, texture, NULL, &position);
+    SDL_RenderTexture(renderer, texture, nullptr, &position);
     SDL_RenderPresent(renderer);
 }

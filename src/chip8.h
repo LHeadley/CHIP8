@@ -1,7 +1,7 @@
 #ifndef CHIP_8_CHIP8_H
 #define CHIP_8_CHIP8_H
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include <string>
 #include "screen.h"
 

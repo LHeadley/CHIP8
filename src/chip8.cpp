@@ -1,6 +1,7 @@
 #include "chip8.h"
 #include <fstream>
 #include <iostream>
+#include <format>
 
 
 Chip8::Chip8(std::string fname) {
@@ -13,7 +14,7 @@ Chip8::Chip8(std::string fname) {
 bool Chip8::load_ROM(const std::string &fname) {
     std::ifstream file(fname, std::ios::binary | std::ios::ate);
     if (!file) {
-        SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Failed to open input file.");
+        std::cerr << "ERROR: Failed to open input file\n";
         return false;
     }
 
@@ -21,7 +22,7 @@ bool Chip8::load_ROM(const std::string &fname) {
     file.seekg(0, std::ios::beg);
 
     if (size > MEMORY_SIZE - PROGRAM_START) {
-        SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Input file is too big.\n");
+        std::cerr << "ERROR: Input file is too big\n";
         return false;
     }
 
@@ -33,7 +34,7 @@ bool Chip8::load_ROM(const std::string &fname) {
 
 uint16_t Chip8::fetch() {
     if (PC > MEMORY_SIZE) {
-        SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Reached end of instructions.");
+        std::cerr << "ERROR: Reached end of instructions\n";
         return 0;
     }
 
@@ -50,7 +51,7 @@ void Chip8::execute_loop() {
         if (exit_on_unknown) {
             running_flag = false;
         }
-        SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Unknown opcode: %04X", opcode);
+        std::cerr << std::format("ERROR: Unknown opcode: %04X\n", opcode);
     } else {
         (this->*func)(opcode);
     }
@@ -71,14 +72,14 @@ void Chip8::opcode_00E_(uint16_t opcode) {
         if (exit_on_unknown) {
             running_flag = false;
         }
-        SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Unknown opcode: %04X", opcode);
+        std::cerr << std::format("ERROR: Unknown opcode: %04X\n", opcode);
     }
 }
 
 
 void Chip8::opcode_00E0(uint16_t opcode) {
     if (debug) {
-        SDL_Log("Called %04X: Clear display", opcode);
+        std::cout << std::format("DEBUG: Called %04X: Clear display\n", opcode);
     }
     memset(display, 0, sizeof(uint8_t) * LOGICAL_WIDTH * LOGICAL_HEIGHT);
     draw_flag = true;
@@ -87,10 +88,10 @@ void Chip8::opcode_00E0(uint16_t opcode) {
 
 void Chip8::opcode_00EE(uint16_t opcode) {
     if (debug) {
-        SDL_Log("Called %04X: Return from subroutine");
+        std::cout << std::format("DEBUG: Called %04X: Return from subroutine\n", opcode);
     }
     if (SP == 0) {
-        SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Attempted stack underflow.");
+        std::cerr << "ERROR: Attempted stack underflow.\n";
         running_flag = false;
     } else {
         PC = stack[--SP];
@@ -101,7 +102,7 @@ void Chip8::opcode_00EE(uint16_t opcode) {
 void Chip8::opcode_1NNN(uint16_t opcode) {
     uint16_t NNN = opcode & 0x0FFF;
     if (debug) {
-        SDL_Log("Called %04X: Jump to %03X", opcode, NNN);
+        std::cout << std::format("DEBUG: Called %04X: Jump to %03X\n", opcode, NNN);
     }
     PC = NNN;
 }
@@ -110,10 +111,10 @@ void Chip8::opcode_2NNN(uint16_t opcode) {
     uint16_t NNN = opcode & 0x0FFF;
 
     if (debug) {
-        SDL_Log("Called %04X: Call subroutine at %03X", opcode, NNN);
+        std::cout << std::format("DEBUG: Called %04X: Call subroutine at %03X\n", opcode, NNN);
     }
     if (SP >= STACK_SIZE) {
-        SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Attempted stack overflow.");
+        std::cerr << "ERROR: Attempted stack overflow.\n";
         running_flag = false;
     } else {
         stack[SP++] = PC;
@@ -126,7 +127,8 @@ void Chip8::opcode_3XNN(uint16_t opcode) {
     uint8_t X = (opcode & 0x0F00) >> 8;
     uint16_t NN = opcode & 0x00FF;
     if (debug) {
-        SDL_Log("Called %04X: Skip next instruction if V%01X (%02X) == %02X", opcode, X, V[X], NN);
+        std::cout << std::format("DEBUG: Called %04X: Skip next instruction if V%01X (%02X) == %02X",
+                                 opcode, X, V[X], NN);
     }
     if (V[X] == NN) {
         PC += 2;
@@ -137,7 +139,8 @@ void Chip8::opcode_4XNN(uint16_t opcode) {
     uint8_t X = (opcode & 0x0F00) >> 8;
     uint16_t NN = opcode & 0x00FF;
     if (debug) {
-        SDL_Log("Called %04X: Skip next instruction if V%01X (%02X) != %02X", opcode, X, V[X], NN);
+        std::cout << std::format("DEBUG: Called %04X: Skip next instruction if V%01X (%02X) != %02X\n",
+                                 opcode, X, V[X], NN);
     }
     if (V[X] != NN) {
         PC += 2;
@@ -148,7 +151,8 @@ void Chip8::opcode_5XY0(uint16_t opcode) {
     uint8_t X = (opcode & 0x0F00) >> 8;
     uint8_t Y = (opcode & 0x00F0) >> 4;
     if (debug) {
-        SDL_Log("Called %04X: Skip next instruction if V%01X (%02X) = V%01X (%02X)", opcode, X, V[X], Y, V[Y]);
+        std::cout << std::format("DEBUG: Called %04X: Skip next instruction if V%01X (%02X) = V%01X (%02X)\n",
+                                 opcode, X, V[X], Y, V[Y]);
     }
     if (V[X] == V[Y]) {
         PC += 2;
@@ -160,7 +164,7 @@ void Chip8::opcode_6XNN(uint16_t opcode) {
     uint8_t X = (opcode & 0x0F00) >> 8;
     uint16_t NN = opcode & 0x00FF;
     if (debug) {
-        SDL_Log("Called %04X: Set V%01X = %02X", opcode, X, NN);
+        std::cout << std::format("DEBUG: Called %04X: Set V%01X = %02X\n", opcode, X, NN);
     }
     V[X] = NN;
 }
@@ -172,7 +176,8 @@ void Chip8::opcode_7XNN(uint16_t opcode) {
     V[X] += NN;
 
     if (debug) {
-        SDL_Log("Called %04X: Add %02X to V%01X. V%01X is now set to %02X", opcode, NN, X, X, V[X]);
+        std::cout << std::format("DEBUG: Called %04X: Add %02X to V%01X. V%01X is now set to %02X\n",
+                                 opcode, NN, X, X, V[X]);
     }
 }
 
@@ -180,7 +185,8 @@ void Chip8::opcode_9XY0(uint16_t opcode) {
     uint8_t X = (opcode & 0x0F00) >> 8;
     uint8_t Y = (opcode & 0x00F0) >> 4;
     if (debug) {
-        SDL_Log("Called %04X: Skip next instruction if V%01X (%02X) != V%01X (%02X)", opcode, X, V[X], Y, V[Y]);
+        std::cout << std::format("DEBUG: Called %04X: Skip next instruction if V%01X (%02X) != V%01X (%02X)\n",
+                                 opcode, X, V[X], Y, V[Y]);
     }
     if (V[X] != V[Y]) {
         PC += 2;
@@ -190,14 +196,14 @@ void Chip8::opcode_9XY0(uint16_t opcode) {
 void Chip8::opcode_ANNN(uint16_t opcode) {
     uint16_t NNN = opcode & 0x0FFF;
     if (debug) {
-        SDL_Log("Called %04X: Set I = %03X", opcode, NNN);
+        std::cout << std::format("DEBUG: Called %04X: Set I = %03X\n", opcode, NNN);
     }
     I = NNN;
 }
 
 void Chip8::opcode_DXYN(uint16_t opcode) {
     if (debug) {
-        SDL_Log("Called %04X: Draw", opcode);
+        std::cout << std::format("DEBUG: Called %04X: Draw\n", opcode);
     }
     uint8_t X = (opcode & 0x0F00) >> 8;
     uint8_t Y = (opcode & 0x00F0) >> 4;
@@ -236,7 +242,6 @@ void Chip8::opcode_DXYN(uint16_t opcode) {
     draw_flag = true;
 }
 
-
 void Chip8::load_instructions() {
     instruction_funcs[0x0] = &Chip8::opcode_00E_;
     instruction_funcs[0x1] = &Chip8::opcode_1NNN;
@@ -262,35 +267,35 @@ void Chip8::update_inputs() {
     SDL_Event e;
     memcpy(prev_keyboard, keyboard, sizeof(uint8_t) * KEY_COUNT);
     while (SDL_PollEvent(&e)) {
-        if (e.type == SDL_QUIT) {
+        if (e.type == SDL_EVENT_QUIT) {
             running_flag = false;
             break;
-        } else if (e.type == SDL_KEYDOWN) {
+        } else if (e.type == SDL_EVENT_KEY_DOWN) {
             for (int i = 0; i < KEY_COUNT; i++) {
-                if (e.key.keysym.scancode == KEYMAP[i]) {
+                if (e.key.scancode == KEYMAP[i]) {
                     keyboard[i] = true;
                 }
             }
-        } else if (e.type == SDL_KEYUP) {
-            if (e.key.keysym.scancode == EXIT_BUTTON) {
+        } else if (e.type == SDL_EVENT_KEY_UP) {
+            if (e.key.scancode == EXIT_BUTTON) {
                 running_flag = false;
                 break;
             }
 
-            if (e.key.keysym.scancode == PAUSE_BUTTON) {
+            if (e.key.scancode == PAUSE_BUTTON) {
                 stepping = !stepping;
                 if (stepping) {
                     execute_next = false;
                 }
             }
 
-            if (e.key.keysym.scancode == STEP_BUTTON) {
+            if (e.key.scancode == STEP_BUTTON) {
                 execute_next = true;
             }
 
 
             for (int i = 0; i < KEY_COUNT; i++) {
-                if (e.key.keysym.scancode == KEYMAP[i]) {
+                if (e.key.scancode == KEYMAP[i]) {
                     keyboard[i] = false;
                 }
             }

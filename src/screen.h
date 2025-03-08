@@ -1,7 +1,7 @@
 #ifndef CHIP8_DISPLAY_H
 #define CHIP8_DISPLAY_H
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 
 const int WINDOW_WIDTH = 640;
 const int WINDOW_HEIGHT = 320;
