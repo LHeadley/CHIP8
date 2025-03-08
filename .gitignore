@@ -1,0 +1,6 @@
+cmake-build-debug
+
+*.o
+*.exe
+
+*.ch8
