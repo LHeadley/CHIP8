@@ -61,6 +61,21 @@ void Chip8::execute_loop() {
 }
 
 
+void Chip8::opcode_00E_(uint16_t opcode) {
+    uint8_t opt = (opcode & 0x000F);
+    if (opt == 0x0) {
+        opcode_00E0(opcode);
+    } else if (opt == 0xE) {
+        opcode_00EE(opcode);
+    } else {
+        if (exit_on_unknown) {
+            running_flag = false;
+        }
+        SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Unknown opcode: %04X", opcode);
+    }
+}
+
+
 void Chip8::opcode_00E0(uint16_t opcode) {
     if (debug) {
         SDL_Log("Called %04X: Clear display", opcode);
@@ -70,24 +85,49 @@ void Chip8::opcode_00E0(uint16_t opcode) {
 }
 
 
+void Chip8::opcode_00EE(uint16_t opcode) {
+    if (debug) {
+        SDL_Log("Called %04X: Return from subroutine");
+    }
+    if (SP == 0) {
+        SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Attempted stack underflow.");
+        running_flag = false;
+    } else {
+        PC = stack[--SP];
+    }
+}
+
+
 void Chip8::opcode_1NNN(uint16_t opcode) {
     uint16_t NNN = opcode & 0x0FFF;
-
     if (debug) {
         SDL_Log("Called %04X: Jump to %03X", opcode, NNN);
     }
-
     PC = NNN;
 }
+
+void Chip8::opcode_2NNN(uint16_t opcode) {
+    uint16_t NNN = opcode & 0x0FFF;
+
+    if (debug) {
+        SDL_Log("Called %04X: Call subroutine at %03X", opcode, NNN);
+    }
+    if (SP >= STACK_SIZE) {
+        SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Attempted stack overflow.");
+        running_flag = false;
+    } else {
+        stack[SP++] = PC;
+        PC = NNN;
+    }
+}
+
 
 void Chip8::opcode_3XNN(uint16_t opcode) {
     uint8_t X = (opcode & 0x0F00) >> 8;
     uint16_t NN = opcode & 0x00FF;
-
     if (debug) {
         SDL_Log("Called %04X: Skip next instruction if V%01X (%02X) == %02X", opcode, X, V[X], NN);
     }
-
     if (V[X] == NN) {
         PC += 2;
     }
@@ -96,11 +136,9 @@ void Chip8::opcode_3XNN(uint16_t opcode) {
 void Chip8::opcode_4XNN(uint16_t opcode) {
     uint8_t X = (opcode & 0x0F00) >> 8;
     uint16_t NN = opcode & 0x00FF;
-
     if (debug) {
         SDL_Log("Called %04X: Skip next instruction if V%01X (%02X) != %02X", opcode, X, V[X], NN);
     }
-
     if (V[X] != NN) {
         PC += 2;
     }
@@ -109,22 +147,18 @@ void Chip8::opcode_4XNN(uint16_t opcode) {
 void Chip8::opcode_5XY0(uint16_t opcode) {
     uint8_t X = (opcode & 0x0F00) >> 8;
     uint8_t Y = (opcode & 0x00F0) >> 4;
-
     if (debug) {
         SDL_Log("Called %04X: Skip next instruction if V%01X (%02X) = V%01X (%02X)", opcode, X, V[X], Y, V[Y]);
     }
-
     if (V[X] == V[Y]) {
         PC += 2;
     }
-
 }
 
 
 void Chip8::opcode_6XNN(uint16_t opcode) {
     uint8_t X = (opcode & 0x0F00) >> 8;
     uint16_t NN = opcode & 0x00FF;
-
     if (debug) {
         SDL_Log("Called %04X: Set V%01X = %02X", opcode, X, NN);
     }
@@ -145,15 +179,12 @@ void Chip8::opcode_7XNN(uint16_t opcode) {
 void Chip8::opcode_9XY0(uint16_t opcode) {
     uint8_t X = (opcode & 0x0F00) >> 8;
     uint8_t Y = (opcode & 0x00F0) >> 4;
-
     if (debug) {
         SDL_Log("Called %04X: Skip next instruction if V%01X (%02X) != V%01X (%02X)", opcode, X, V[X], Y, V[Y]);
     }
-
     if (V[X] != V[Y]) {
         PC += 2;
     }
-
 }
 
 void Chip8::opcode_ANNN(uint16_t opcode) {
@@ -207,8 +238,9 @@ void Chip8::opcode_DXYN(uint16_t opcode) {
 
 
 void Chip8::load_instructions() {
-    instruction_funcs[0x0] = &Chip8::opcode_00E0;
+    instruction_funcs[0x0] = &Chip8::opcode_00E_;
     instruction_funcs[0x1] = &Chip8::opcode_1NNN;
+    instruction_funcs[0x2] = &Chip8::opcode_2NNN;
     instruction_funcs[0x3] = &Chip8::opcode_3XNN;
     instruction_funcs[0x4] = &Chip8::opcode_4XNN;
     instruction_funcs[0x5] = &Chip8::opcode_5XY0;

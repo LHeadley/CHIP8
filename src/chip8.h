@@ -8,7 +8,7 @@
 const int KEY_COUNT = 16;
 const int REGISTER_COUNT = 16;
 const int MEMORY_SIZE = 4096;
-const int STACK_SIZE = 10;
+const int STACK_SIZE = 16;
 
 const int LOGICAL_WIDTH = 64;
 const int LOGICAL_HEIGHT = 32;
@@ -109,11 +109,20 @@ private:
 
     uint16_t fetch();
 
+    //00E_ Either 00E0 or 00EE
+    void opcode_00E_(uint16_t opcode);
+
     //00E0 Clear Screen
     void opcode_00E0(uint16_t opcode);
 
+    //00EE Return from subroutine
+    void opcode_00EE(uint16_t opcode);
+
     //1NNN Jump to NNN
     void opcode_1NNN(uint16_t opcode);
+
+    //2NNN Call subroutine at NNN
+    void opcode_2NNN(uint16_t opcode);
 
     //3XNN Skip next instruction if VX = NN
     void opcode_3XNN(uint16_t opcode);
