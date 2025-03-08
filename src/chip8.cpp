@@ -80,6 +80,47 @@ void Chip8::opcode_1NNN(uint16_t opcode) {
     PC = NNN;
 }
 
+void Chip8::opcode_3XNN(uint16_t opcode) {
+    uint8_t X = (opcode & 0x0F00) >> 8;
+    uint16_t NN = opcode & 0x00FF;
+
+    if (debug) {
+        SDL_Log("Called %04X: Skip next instruction if V%01X (%02X) == %02X", opcode, X, V[X], NN);
+    }
+
+    if (V[X] == NN) {
+        PC += 2;
+    }
+}
+
+void Chip8::opcode_4XNN(uint16_t opcode) {
+    uint8_t X = (opcode & 0x0F00) >> 8;
+    uint16_t NN = opcode & 0x00FF;
+
+    if (debug) {
+        SDL_Log("Called %04X: Skip next instruction if V%01X (%02X) != %02X", opcode, X, V[X], NN);
+    }
+
+    if (V[X] != NN) {
+        PC += 2;
+    }
+}
+
+void Chip8::opcode_5XY0(uint16_t opcode) {
+    uint8_t X = (opcode & 0x0F00) >> 8;
+    uint8_t Y = (opcode & 0x00F0) >> 4;
+
+    if (debug) {
+        SDL_Log("Called %04X: Skip next instruction if V%01X (%02X) = V%01X (%02X)", opcode, X, V[X], Y, V[Y]);
+    }
+
+    if (V[X] == V[Y]) {
+        PC += 2;
+    }
+
+}
+
+
 void Chip8::opcode_6XNN(uint16_t opcode) {
     uint8_t X = (opcode & 0x0F00) >> 8;
     uint16_t NN = opcode & 0x00FF;
@@ -99,6 +140,20 @@ void Chip8::opcode_7XNN(uint16_t opcode) {
     if (debug) {
         SDL_Log("Called %04X: Add %02X to V%01X. V%01X is now set to %02X", opcode, NN, X, X, V[X]);
     }
+}
+
+void Chip8::opcode_9XY0(uint16_t opcode) {
+    uint8_t X = (opcode & 0x0F00) >> 8;
+    uint8_t Y = (opcode & 0x00F0) >> 4;
+
+    if (debug) {
+        SDL_Log("Called %04X: Skip next instruction if V%01X (%02X) != V%01X (%02X)", opcode, X, V[X], Y, V[Y]);
+    }
+
+    if (V[X] != V[Y]) {
+        PC += 2;
+    }
+
 }
 
 void Chip8::opcode_ANNN(uint16_t opcode) {
@@ -154,8 +209,12 @@ void Chip8::opcode_DXYN(uint16_t opcode) {
 void Chip8::load_instructions() {
     instruction_funcs[0x0] = &Chip8::opcode_00E0;
     instruction_funcs[0x1] = &Chip8::opcode_1NNN;
+    instruction_funcs[0x3] = &Chip8::opcode_3XNN;
+    instruction_funcs[0x4] = &Chip8::opcode_4XNN;
+    instruction_funcs[0x5] = &Chip8::opcode_5XY0;
     instruction_funcs[0x6] = &Chip8::opcode_6XNN;
     instruction_funcs[0x7] = &Chip8::opcode_7XNN;
+    instruction_funcs[0x9] = &Chip8::opcode_9XY0;
     instruction_funcs[0xA] = &Chip8::opcode_ANNN;
     instruction_funcs[0xD] = &Chip8::opcode_DXYN;
 }
