@@ -54,6 +54,10 @@ public:
     Chip8(std::string _fname, bool _debug): Chip8(_fname) {
         debug = _debug;
     }
+    Chip8(std::string _fname, bool _debug, bool exit): Chip8(_fname) {
+        debug = _debug;
+        exit_on_unknown = exit;
+    }
 
     void execute_loop();
 
@@ -69,6 +73,7 @@ private:
     bool debug = true;
     bool stepping = false;
     bool execute_next = false;
+    bool exit_on_unknown = true;
 
     uint8_t memory[MEMORY_SIZE] = {0};
 

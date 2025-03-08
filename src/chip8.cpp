@@ -47,13 +47,15 @@ void Chip8::execute_loop() {
     uint16_t opcode = fetch();
     InstructionFunc func = instruction_funcs[(opcode & 0xF000) >> 12];
     if (!func) {
-        running_flag = false;
+        if (exit_on_unknown) {
+            running_flag = false;
+        }
         SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Unknown opcode: %04X", opcode);
     } else {
         (this->*func)(opcode);
     }
 
-    if(stepping) {
+    if (stepping) {
         execute_next = false;
     }
 }
@@ -61,7 +63,7 @@ void Chip8::execute_loop() {
 
 void Chip8::opcode_00E0(uint16_t opcode) {
     if (debug) {
-        SDL_Log( "Called %04X: Clear display", opcode);
+        SDL_Log("Called %04X: Clear display", opcode);
     }
     memset(display, 0, sizeof(uint8_t) * LOGICAL_WIDTH * LOGICAL_HEIGHT);
     draw_flag = true;
@@ -72,7 +74,7 @@ void Chip8::opcode_1NNN(uint16_t opcode) {
     uint16_t NNN = opcode & 0x0FFF;
 
     if (debug) {
-        SDL_Log( "Called %04X: Jump to %03X", opcode, NNN);
+        SDL_Log("Called %04X: Jump to %03X", opcode, NNN);
     }
 
     PC = NNN;
@@ -83,7 +85,7 @@ void Chip8::opcode_6XNN(uint16_t opcode) {
     uint16_t NN = opcode & 0x00FF;
 
     if (debug) {
-        SDL_Log( "Called %04X: Set V%01X = %02X", opcode, X, NN);
+        SDL_Log("Called %04X: Set V%01X = %02X", opcode, X, NN);
     }
     V[X] = NN;
 }
@@ -95,21 +97,21 @@ void Chip8::opcode_7XNN(uint16_t opcode) {
     V[X] += NN;
 
     if (debug) {
-        SDL_Log( "Called %04X: Add %02X to V%01X. V%01X is now set to %02X", opcode, NN, X, X, V[X]);
+        SDL_Log("Called %04X: Add %02X to V%01X. V%01X is now set to %02X", opcode, NN, X, X, V[X]);
     }
 }
 
 void Chip8::opcode_ANNN(uint16_t opcode) {
     uint16_t NNN = opcode & 0x0FFF;
     if (debug) {
-        SDL_Log( "Called %04X: Set I = %03X", opcode, NNN);
+        SDL_Log("Called %04X: Set I = %03X", opcode, NNN);
     }
     I = NNN;
 }
 
 void Chip8::opcode_DXYN(uint16_t opcode) {
     if (debug) {
-        SDL_Log( "Called %04X: Draw", opcode);
+        SDL_Log("Called %04X: Draw", opcode);
     }
     uint8_t X = (opcode & 0x0F00) >> 8;
     uint8_t Y = (opcode & 0x00F0) >> 4;
@@ -184,9 +186,9 @@ void Chip8::update_inputs() {
                 break;
             }
 
-            if(e.key.keysym.scancode == PAUSE_BUTTON) {
+            if (e.key.keysym.scancode == PAUSE_BUTTON) {
                 stepping = !stepping;
-                if(stepping) {
+                if (stepping) {
                     execute_next = false;
                 }
             }
