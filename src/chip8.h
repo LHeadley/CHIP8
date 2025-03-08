@@ -51,10 +51,12 @@ constexpr uint8_t KEYMAP[KEY_COUNT] = {
 class Chip8 {
 public:
     explicit Chip8(std::string fname);
-    Chip8(std::string _fname, bool _debug): Chip8(_fname) {
+
+    Chip8(std::string _fname, bool _debug) : Chip8(_fname) {
         debug = _debug;
     }
-    Chip8(std::string _fname, bool _debug, bool exit): Chip8(_fname) {
+
+    Chip8(std::string _fname, bool _debug, bool exit) : Chip8(_fname) {
         debug = _debug;
         exit_on_unknown = exit;
     }
@@ -65,10 +67,12 @@ public:
 
     void draw(Screen &screen);
 
-    bool should_execute_next() const {return execute_next;}
+    bool should_execute_next() const { return execute_next; }
 
     bool isRunning() const { return running_flag; }
-    bool isStepping() const {return stepping;}
+
+    bool isStepping() const { return stepping; }
+
 private:
     bool debug = true;
     bool stepping = false;
@@ -108,14 +112,26 @@ private:
     //00E0 Clear Screen
     void opcode_00E0(uint16_t opcode);
 
-    //1NNN jump to NNN
+    //1NNN Jump to NNN
     void opcode_1NNN(uint16_t opcode);
+
+    //3XNN Skip next instruction if VX = NN
+    void opcode_3XNN(uint16_t opcode);
+
+    //4XNN Skip next instruction if VX != NN
+    void opcode_4XNN(uint16_t opcode);
+
+    //5XY0 Skip next instruction if VX = VY
+    void opcode_5XY0(uint16_t opcode);
 
     //6XNN Let VX = NN
     void opcode_6XNN(uint16_t opcode);
 
     //7XNN Add NN to VX
     void opcode_7XNN(uint16_t opcode);
+
+    //9XY0 Skip next instruction if VX != VY
+    void opcode_9XY0(uint16_t opcode);
 
     //ANNN Let I = NNN
     void opcode_ANNN(uint16_t opcode);
