@@ -7,6 +7,7 @@ An interpreter for the [CHIP-8](https://en.wikipedia.org/wiki/CHIP-8) programmin
 Make using cmake and run with `.\CHIP8 [options] rom.ch8`. Valid options are:
 - `-d` enables debug output
 - `-i` <ipf> sets the instruction count per frame to <ipf>. Default value is 11. 
+- `-e (0|1)` whether or not to exit on an unknown instruction. Default is 1 (true).
 
 When running, press escape to exit. Pressing space will pause execution, and pressing the right arrow key will then allow for running one instruction at a time.z 
 
