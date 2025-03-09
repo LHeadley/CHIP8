@@ -139,6 +139,9 @@ private:
     //7XNN Add NN to VX
     void opcode_7XNN(uint16_t opcode);
 
+    //8XY_ Logic and Arithmetic Instructions
+    void opcode_8XY_(uint16_t opcode);
+
     //9XY0 Skip next instruction if VX != VY
     void opcode_9XY0(uint16_t opcode);
 
@@ -147,6 +150,9 @@ private:
 
     //DXYN Draw
     void opcode_DXYN(uint16_t opcode);
+
+    //FX29 Get Font
+    void opcode_FX29(uint16_t opcode);
 
 };
 

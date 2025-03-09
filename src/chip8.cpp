@@ -181,12 +181,79 @@ void Chip8::opcode_7XNN(uint16_t opcode) {
     }
 }
 
+void Chip8::opcode_8XY_(uint16_t opcode) {
+    uint8_t X = (opcode & 0x0F00) >> 8;
+    uint8_t Y = (opcode & 0x00F0) >> 4;
+    uint8_t opt = opcode & 0x000F;
+    std::string debug_str;
+    bool flag = false;
+    switch (opt) {
+        case 0x0: //Set VX = VY
+            debug_str = std::format("DEBUG: Called {:04X}: Set V{:01X} = V{:01X}\n", opcode, X, Y);
+            V[X] = V[Y];
+            break;
+        case 0x1: //Set VX = VX | VY
+            debug_str = std::format("DEBUG: Called {:04X}: Set V{:01X} |= V{:01X}\n", opcode, X, Y);
+            V[X] |= V[Y];
+            break;
+        case 0x2: //Set VX = VX & VY
+            debug_str = std::format("DEBUG: Called {:04X}: Set V{:01X} &= V{:01X}\n", opcode, X, Y);
+            V[X] &= V[Y];
+            break;
+        case 0x3: //Set VX = VX ^ VY
+            debug_str = std::format("DEBUG: Called {:04X}: Set V{:01X} ^= V{:01X}\n", opcode, X, Y);
+            V[X] ^= V[Y];
+            break;
+        case 0x4: //Set VX = VX + VY and set VF = 1 if overflow
+            debug_str = std::format("DEBUG: Called {:04X}: Set V{:01X} += V{:01X}\n", opcode, X, Y);
+            flag = (V[X] + V[Y]) > 255;
+            V[X] += V[Y];
+            V[0xF] = flag;
+            break;
+        case 0x5: //Set VX = VX - VY and set VF = 1 if VX > VY
+            debug_str = std::format("DEBUG: Called {:04X}: Set V{:01X} -= V{:01X}\n", opcode, X, Y);
+            flag = V[X] > V[Y];
+            V[X] -= V[Y];
+            V[0xF] = flag;
+            break;
+        case 0x6: //Set VX = VY, shift VX 1 bit right and set VF = the shifted out bit
+            debug_str = std::format("DEBUG: Called {:04X}: Set V{:01X} = V{:01X} >> 1,\n", opcode, X, Y);
+            V[X] = V[Y];
+            flag = V[X] & 1;
+            V[X] >>= 1;
+            V[0xF] = flag;
+            break;
+        case 0x7: //Set VX = VY - VX and set VF = 1 if VY > VX
+            debug_str = std::format("DEBUG: Called {:04X}: Set V{:01X} |= V{:01X}\n", opcode, X, Y);
+            flag = V[Y] > V[X];
+            V[X] = V[Y] - V[X];
+            V[0xF] = flag;
+            break;
+        case 0xE: //Set VX = VY, shift VX 1 bit left and set VF = the shifted out bit
+            debug_str = std::format("DEBUG: Called {:04X}: Set V{:01X} = V{:01X} << 1\n", opcode, X, Y);
+            V[X] = V[Y];
+            flag = (V[X] & 10000000) >> 7;
+            V[X] <<= 1;
+            V[0xF] = flag;
+            break;
+        default:
+            if (exit_on_unknown) {
+                running_flag = false;
+            }
+            std::cerr << std::format("ERROR: Unknown opcode: {:04X}\n", opcode);
+    }
+    if (debug && !debug_str.empty()) {
+        std::cout << debug_str;
+    }
+}
+
 void Chip8::opcode_9XY0(uint16_t opcode) {
     uint8_t X = (opcode & 0x0F00) >> 8;
     uint8_t Y = (opcode & 0x00F0) >> 4;
     if (debug) {
-        std::cout << std::format("DEBUG: Called {:04X}: Skip next instruction if V{:01X} ({:02X}) != V{:01X} ({:02X})\n",
-                                 opcode, X, V[X], Y, V[Y]);
+        std::cout
+                << std::format("DEBUG: Called {:04X}: Skip next instruction if V{:01X} ({:02X}) != V{:01X} ({:02X})\n",
+                               opcode, X, V[X], Y, V[Y]);
     }
     if (V[X] != V[Y]) {
         PC += 2;
@@ -242,6 +309,12 @@ void Chip8::opcode_DXYN(uint16_t opcode) {
     draw_flag = true;
 }
 
+
+void Chip8::opcode_FX29(uint16_t opcode) {
+
+}
+
+
 void Chip8::load_instructions() {
     instruction_funcs[0x0] = &Chip8::opcode_00E_;
     instruction_funcs[0x1] = &Chip8::opcode_1NNN;
@@ -251,6 +324,7 @@ void Chip8::load_instructions() {
     instruction_funcs[0x5] = &Chip8::opcode_5XY0;
     instruction_funcs[0x6] = &Chip8::opcode_6XNN;
     instruction_funcs[0x7] = &Chip8::opcode_7XNN;
+    instruction_funcs[0x8] = &Chip8::opcode_8XY_;
     instruction_funcs[0x9] = &Chip8::opcode_9XY0;
     instruction_funcs[0xA] = &Chip8::opcode_ANNN;
     instruction_funcs[0xD] = &Chip8::opcode_DXYN;
