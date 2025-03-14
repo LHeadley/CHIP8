@@ -408,10 +408,9 @@ void Chip8::opcode_FX29(uint8_t X) {
 
 void Chip8::opcode_FX33(uint8_t X) {
     if (debug) std::cout << std::format("DEBUG: Called F{:01X}33: Compute BCD of V{:01X}\n", X, X);
+
     uint8_t val = V[X];
-    std::cout << std::format("BCD OF {:d}:\n", val);
     for (int i = 2; i >= 0; --i) {
-        std::cout << std::format("{:d}\n", val % 10);
         memory[I + i] = val % 10;
         val /= 10;
     }
