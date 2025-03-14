@@ -1,6 +1,7 @@
 #include <iostream>
 #include <SDL3/SDL.h>
 #include <getopt.h>
+#include <thread>
 #include "chip8.h"
 
 int main(int argc, char *argv[]) {
@@ -8,27 +9,32 @@ int main(int argc, char *argv[]) {
     int ipf = 11;
     bool debug = false;
     bool exit_on_unknown = true;
+    bool increment_I_on_index = false;
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS);
 
     const struct option longopts[] = {
-            {"exit-on-unknown", required_argument, nullptr, 'e'},
-            {"debug", no_argument, nullptr, 'd'},
-            {"ipf", required_argument, nullptr, 'i'},
-            {nullptr, 0, nullptr, 0}
+            {"ignore",         no_argument,       nullptr, 'e'},
+            {"debug",          no_argument,       nullptr, 'd'},
+            {"ipf",            required_argument, nullptr, 'i'},
+            {"inc-i-on-index", no_argument,       nullptr, 'c'},
+            {nullptr,          0,                 nullptr, 0}
     };
 
     int index;
 
-    while ((c = getopt_long(argc, argv, "e:di:", longopts, &index)) != -1) {
+    while ((c = getopt_long(argc, argv, "edi:", longopts, &index)) != -1) {
         switch (c) {
             case 'e':
-                exit_on_unknown = optarg[0] == '1';
+                exit_on_unknown = false;
                 break;
             case 'd':
                 debug = true;
                 break;
             case 'i':
                 ipf = atoi(optarg);
+                break;
+            case 'c':
+                increment_I_on_index = true;
                 break;
             default:
                 abort();
@@ -39,14 +45,14 @@ int main(int argc, char *argv[]) {
         std::cerr << "Usage: ./chip8 [options] input.ch8\n";
         return 0;
     }
-    Chip8 chip8(argv[optind++], debug, exit_on_unknown);
+    Chip8 chip8(argv[optind++], debug, exit_on_unknown, increment_I_on_index);
     if (!chip8.isRunning()) {
         return 0;
     }
     Screen screen;
 
-
     while (chip8.isRunning()) {
+        auto frame_start = std::chrono::high_resolution_clock::now();
         chip8.update_inputs();
         if (!chip8.isStepping()) {
             for (int i = 0; i < ipf; ++i) {
@@ -57,6 +63,11 @@ int main(int argc, char *argv[]) {
         }
 
         chip8.draw(screen);
+        chip8.decrement_timers();
+
+        if (!chip8.isStepping()) {
+            std::this_thread::sleep_until(frame_start + std::chrono::milliseconds(16));
+        }
     }
 
 

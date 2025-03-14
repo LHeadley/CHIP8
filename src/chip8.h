@@ -19,6 +19,7 @@ const int PAUSE_BUTTON = SDL_SCANCODE_SPACE;
 const int STEP_BUTTON = SDL_SCANCODE_RIGHT;
 
 const int PROGRAM_START = 0x200;
+const int FONT_START = 0x050;
 
 const int FONTSET_SIZE = 80;
 
@@ -61,9 +62,19 @@ public:
         exit_on_unknown = exit;
     }
 
+    Chip8(std::string _fname, bool _debug, bool exit, bool increment_I) : Chip8(_fname, _debug, exit) {
+        debug = _debug;
+        exit_on_unknown = exit;
+        increment_I_on_index = increment_I;
+    }
+
+
+
     void execute_loop();
 
     void update_inputs();
+
+    void decrement_timers();
 
     void draw(Screen &screen);
 
@@ -78,6 +89,7 @@ private:
     bool stepping = false;
     bool execute_next = false;
     bool exit_on_unknown = true;
+    bool increment_I_on_index = false;
 
     uint8_t memory[MEMORY_SIZE] = {0};
 
@@ -151,9 +163,34 @@ private:
     //DXYN Draw
     void opcode_DXYN(uint16_t opcode);
 
-    //FX29 Get Font
-    void opcode_FX29(uint16_t opcode);
+    void opcode_FX_(uint16_t opcode);
 
+    //FX07 Let VX = delay timer
+    void opcode_FX07(uint8_t X);
+
+    //FX0A Wait for key input and put key in VX
+    void opcode_FX0A(uint8_t X);
+
+    //FX15 Set delay timer = VX
+    void opcode_FX15(uint8_t X);
+
+    //FX18 Set sound timer = VX
+    void opcode_FX18(uint8_t X);
+
+    //FX1E Add VX to I
+    void opcode_FX1E(uint8_t X);
+
+    //FX29 Set I = address of character in VX
+    void opcode_FX29(uint8_t X);
+
+    //FX33 Convert VX to BCD and store starting at memory[I]
+    void opcode_FX33(uint8_t X);
+
+    //FX55 Store memory
+    void opcode_FX55(uint8_t X);
+
+    //FX65 Load memory
+    void opcode_FX65(uint8_t X);
 };
 
 
