@@ -212,7 +212,7 @@ void Chip8::opcode_8XY_(uint16_t opcode) {
             break;
         case 0x5: //Set VX = VX - VY and set VF = 1 if VX > VY
             debug_str = std::format("DEBUG: Called {:04X}: Set V{:01X} -= V{:01X}\n", opcode, X, Y);
-            flag = V[X] > V[Y];
+            flag = V[X] >= V[Y];
             V[X] -= V[Y];
             V[0xF] = flag;
             break;
@@ -224,8 +224,8 @@ void Chip8::opcode_8XY_(uint16_t opcode) {
             V[0xF] = flag;
             break;
         case 0x7: //Set VX = VY - VX and set VF = 1 if VY > VX
-            debug_str = std::format("DEBUG: Called {:04X}: Set V{:01X} |= V{:01X}\n", opcode, X, Y);
-            flag = V[Y] > V[X];
+            debug_str = std::format("DEBUG: Called {:04X}: Set V{:01X} = V{:01X} - V{:01X}\n", opcode, X, Y, X);
+            flag = V[Y] >= V[X];
             V[X] = V[Y] - V[X];
             V[0xF] = flag;
             break;
