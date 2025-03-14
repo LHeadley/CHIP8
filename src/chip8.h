@@ -160,6 +160,9 @@ private:
     //ANNN Let I = NNN
     void opcode_ANNN(uint16_t opcode);
 
+    //CXNN Random
+    void opcode_CXNN(uint16_t opcode);
+
     //DXYN Draw
     void opcode_DXYN(uint16_t opcode);
 

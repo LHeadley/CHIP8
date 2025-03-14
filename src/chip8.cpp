@@ -2,6 +2,7 @@
 #include <fstream>
 #include <iostream>
 #include <format>
+#include <random>
 
 
 Chip8::Chip8(std::string fname) {
@@ -35,6 +36,7 @@ bool Chip8::load_ROM(const std::string &fname) {
 uint16_t Chip8::fetch() {
     if (PC > MEMORY_SIZE) {
         std::cerr << "ERROR: Reached end of instructions\n";
+        running_flag = false;
         return 0;
     }
 
@@ -268,6 +270,19 @@ void Chip8::opcode_ANNN(uint16_t opcode) {
     I = NNN;
 }
 
+void Chip8::opcode_CXNN(uint16_t opcode) {
+    static std::random_device rd;
+    static std::mt19937 gen{rd()};
+    static std::uniform_int_distribution<uint8_t> dis;
+
+
+    uint8_t X = (opcode & 0x0F00) >> 8;
+    uint8_t NN = opcode & 0x00FF;
+
+    if (debug) std::cout << std::format("DEBUG: Called {:04X} V[{:01X}] = RAND & {:02X}\n", opcode, X, NN);
+    V[X] = dis(gen) & NN;
+}
+
 void Chip8::opcode_DXYN(uint16_t opcode) {
     if (debug) {
         std::cout << std::format("DEBUG: Called {:04X}: Draw\n", opcode);
@@ -352,12 +367,12 @@ void Chip8::opcode_FX_(uint16_t opcode) {
 }
 
 void Chip8::opcode_FX07(uint8_t X) {
-    if(debug) std::cout << std::format("DEBUG: Called F{:01X}07: Set V{:01X} = delay\n", X, X);
+    if (debug) std::cout << std::format("DEBUG: Called F{:01X}07: Set V{:01X} = delay\n", X, X);
     V[X] = delay;
 }
 
 void Chip8::opcode_FX0A(uint8_t X) {
-    if(debug) std::cout << std::format("DEBUG: Called F{:01X}0A: Wait for key press\n", X, X);
+    if (debug) std::cout << std::format("DEBUG: Called F{:01X}0A: Wait for key press\n", X, X);
 
     for (int i = 0; i < KEY_COUNT; ++i) {
         if (!keyboard[i] && prev_keyboard[i]) {
@@ -370,31 +385,32 @@ void Chip8::opcode_FX0A(uint8_t X) {
 }
 
 void Chip8::opcode_FX15(uint8_t X) {
-    if(debug) std::cout << std::format("DEBUG: Called F{:01X}15: Set delay = V{:01X}\n", X, X);
+    if (debug) std::cout << std::format("DEBUG: Called F{:01X}15: Set delay = V{:01X}\n", X, X);
     delay = V[X];
 }
 
 void Chip8::opcode_FX18(uint8_t X) {
-    if(debug) std::cout << std::format("DEBUG: Called F{:01X}18: Set sound = V{:01X}\n", X, X);
+    if (debug) std::cout << std::format("DEBUG: Called F{:01X}18: Set sound = V{:01X}\n", X, X);
     sound = V[X];
 }
 
 void Chip8::opcode_FX1E(uint8_t X) {
-    if(debug) std::cout << std::format("DEBUG: Called F{:01X}1E: I += V{:01X}\n", X, X);
+    if (debug) std::cout << std::format("DEBUG: Called F{:01X}1E: I += V{:01X}\n", X, X);
     I += V[X];
 }
 
 void Chip8::opcode_FX29(uint8_t X) {
-    if(debug) std::cout << std::format("DEBUG: Called F{:01X}29: Set I = address of font character in V{:01X}\n", X, X);
+    if (debug)
+        std::cout << std::format("DEBUG: Called F{:01X}29: Set I = address of font character in V{:01X}\n", X, X);
     I = FONT_START + (X * 5);
 }
 
 
 void Chip8::opcode_FX33(uint8_t X) {
-    if(debug) std::cout << std::format("DEBUG: Called F{:01X}33: Compute BCD of V{:01X}\n", X, X);
+    if (debug) std::cout << std::format("DEBUG: Called F{:01X}33: Compute BCD of V{:01X}\n", X, X);
     uint8_t val = V[X];
     std::cout << std::format("BCD OF {:d}:\n", val);
-    for(int i = 2; i >= 0; --i) {
+    for (int i = 2; i >= 0; --i) {
         std::cout << std::format("{:d}\n", val % 10);
         memory[I + i] = val % 10;
         val /= 10;
@@ -402,15 +418,16 @@ void Chip8::opcode_FX33(uint8_t X) {
 }
 
 void Chip8::opcode_FX55(uint8_t X) {
-    if(debug) std::cout << std::format("DEBUG: Called F{:01X}55: Load registers V0 to V{:01X} into memory[I]\n", X, X);
+    if (debug) std::cout << std::format("DEBUG: Called F{:01X}55: Load registers V0 to V{:01X} into memory[I]\n", X, X);
     memcpy(&memory[I], V, (X + 1) * sizeof(uint8_t));
-    if(increment_I_on_index) I += X + 1;
+    if (increment_I_on_index) I += X + 1;
 }
 
 void Chip8::opcode_FX65(uint8_t X) {
-    if(debug) std::cout << std::format("DEBUG: Called F{:01X}55: Load memory[I] into registers V[0] to V{:01X} \n", X, X);
+    if (debug)
+        std::cout << std::format("DEBUG: Called F{:01X}55: Load memory[I] into registers V[0] to V{:01X} \n", X, X);
     memcpy(V, &memory[I], (X + 1) * sizeof(uint8_t));
-    if(increment_I_on_index) I += X + 1;
+    if (increment_I_on_index) I += X + 1;
 }
 
 void Chip8::load_instructions() {
@@ -425,6 +442,7 @@ void Chip8::load_instructions() {
     instruction_funcs[0x8] = &Chip8::opcode_8XY_;
     instruction_funcs[0x9] = &Chip8::opcode_9XY0;
     instruction_funcs[0xA] = &Chip8::opcode_ANNN;
+    instruction_funcs[0xC] = &Chip8::opcode_CXNN;
     instruction_funcs[0xD] = &Chip8::opcode_DXYN;
     instruction_funcs[0xF] = &Chip8::opcode_FX_;
 }
