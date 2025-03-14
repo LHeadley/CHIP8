@@ -127,7 +127,7 @@ void Chip8::opcode_2NNN(uint16_t opcode) {
 
 void Chip8::opcode_3XNN(uint16_t opcode) {
     uint8_t X = (opcode & 0x0F00) >> 8;
-    uint16_t NN = opcode & 0x00FF;
+    uint8_t NN = opcode & 0x00FF;
     if (debug) {
         std::cout << std::format("DEBUG: Called {:04X}: Skip next instruction if V{:01X} ({:02X}) == {:02X}",
                                  opcode, X, V[X], NN);
@@ -139,7 +139,7 @@ void Chip8::opcode_3XNN(uint16_t opcode) {
 
 void Chip8::opcode_4XNN(uint16_t opcode) {
     uint8_t X = (opcode & 0x0F00) >> 8;
-    uint16_t NN = opcode & 0x00FF;
+    uint8_t NN = opcode & 0x00FF;
     if (debug) {
         std::cout << std::format("DEBUG: Called {:04X}: Skip next instruction if V{:01X} ({:02X}) != {:02X}\n",
                                  opcode, X, V[X], NN);
@@ -164,7 +164,7 @@ void Chip8::opcode_5XY0(uint16_t opcode) {
 
 void Chip8::opcode_6XNN(uint16_t opcode) {
     uint8_t X = (opcode & 0x0F00) >> 8;
-    uint16_t NN = opcode & 0x00FF;
+    uint8_t NN = opcode & 0x00FF;
     if (debug) {
         std::cout << std::format("DEBUG: Called {:04X}: Set V{:01X} = {:02X}\n", opcode, X, NN);
     }
@@ -173,7 +173,7 @@ void Chip8::opcode_6XNN(uint16_t opcode) {
 
 void Chip8::opcode_7XNN(uint16_t opcode) {
     uint8_t X = (opcode & 0x0F00) >> 8;
-    uint16_t NN = opcode & 0x00FF;
+    uint8_t NN = opcode & 0x00FF;
 
     V[X] += NN;
 
@@ -327,7 +327,7 @@ void Chip8::opcode_DXYN(uint16_t opcode) {
 
 void Chip8::opcode_FX_(uint16_t opcode) {
     uint8_t X = (opcode & 0x0F00) >> 8;
-    uint16_t opt = (opcode & 0x00FF);
+    uint8_t opt = (opcode & 0x00FF);
 
     switch (opt) {
         case 0x07:
