@@ -280,6 +280,13 @@ void Chip8::opcode_ANNN(uint16_t opcode) {
     I = NNN;
 }
 
+void Chip8::opcode_BNNN(uint16_t opcode) {
+    uint16_t NNN = opcode & 0x0FFF;
+    if (debug) std::cout << std::format("DEBUG: Called {:04X} Jump to {:03X} + V0", opcode, NNN);
+
+    PC = NNN + V[0];
+}
+
 void Chip8::opcode_CXNN(uint16_t opcode) {
     static std::random_device rd;
     static std::mt19937 gen{rd()};
@@ -450,6 +457,7 @@ void Chip8::load_instructions() {
     instruction_funcs[0x8] = &Chip8::opcode_8XY_;
     instruction_funcs[0x9] = &Chip8::opcode_9XY0;
     instruction_funcs[0xA] = &Chip8::opcode_ANNN;
+    instruction_funcs[0xB] = &Chip8::opcode_BNNN;
     instruction_funcs[0xC] = &Chip8::opcode_CXNN;
     instruction_funcs[0xD] = &Chip8::opcode_DXYN;
     instruction_funcs[0xF] = &Chip8::opcode_FX_;

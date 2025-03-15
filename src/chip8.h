@@ -162,6 +162,9 @@ private:
     //ANNN Let I = NNN
     void opcode_ANNN(uint16_t opcode);
 
+    //BNNN Jump tp NNN + V0
+    void opcode_BNNN(uint16_t opcode);
+
     //CXNN Random
     void opcode_CXNN(uint16_t opcode);
 
