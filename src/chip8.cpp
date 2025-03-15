@@ -105,7 +105,7 @@ void Chip8::opcode_00EE(uint16_t opcode) {
 
 void Chip8::opcode_1NNN(uint16_t opcode) {
     uint16_t NNN = opcode & 0x0FFF;
-    if (debug) std::cout << std::format("DEBUG: Called {:04X}: Jump to {:03X}X\n", opcode, NNN);
+    if (debug) std::cout << std::format("DEBUG: Called {:04X}: Jump to {:03X}\n", opcode, NNN);
 
     PC = NNN;
 }
