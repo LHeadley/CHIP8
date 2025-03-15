@@ -121,6 +121,8 @@ private:
 
     uint16_t fetch();
 
+    void unknown_opcode(uint16_t opcode);
+
     //00E_ Either 00E0 or 00EE
     void opcode_00E_(uint16_t opcode);
 

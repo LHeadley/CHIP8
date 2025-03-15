@@ -33,6 +33,14 @@ bool Chip8::load_ROM(const std::string &fname) {
 }
 
 
+void Chip8::unknown_opcode(uint16_t opcode) {
+    if (exit_on_unknown) {
+        running_flag = false;
+    }
+    std::cerr << std::format("ERROR: Unknown opcode: {:04X}\n", opcode);
+}
+
+
 uint16_t Chip8::fetch() {
     if (PC > MEMORY_SIZE) {
         std::cerr << "ERROR: Reached end of instructions\n";
@@ -47,51 +55,45 @@ uint16_t Chip8::fetch() {
 
 
 void Chip8::execute_loop() {
-    uint16_t opcode = fetch();
-    InstructionFunc func = instruction_funcs[(opcode & 0xF000) >> 12];
-    if (!func) {
-        if (exit_on_unknown) {
-            running_flag = false;
+    if (running_flag) {
+        uint16_t opcode = fetch();
+        InstructionFunc func = instruction_funcs[(opcode & 0xF000) >> 12];
+        if (!func) {
+            unknown_opcode(opcode);
+        } else {
+            (this->*func)(opcode);
         }
-        std::cerr << std::format("ERROR: Unknown opcode: {:04X}\n", opcode);
-    } else {
-        (this->*func)(opcode);
-    }
 
-    if (stepping) {
-        execute_next = false;
+        if (stepping) {
+            execute_next = false;
+        }
     }
 }
 
 
 void Chip8::opcode_00E_(uint16_t opcode) {
-    uint8_t opt = (opcode & 0x000F);
-    if (opt == 0x0) {
+    uint8_t opt = (opcode & 0x00FF);
+    if (opt == 0xE0) {
         opcode_00E0(opcode);
-    } else if (opt == 0xE) {
+    } else if (opt == 0xEE) {
         opcode_00EE(opcode);
     } else {
-        if (exit_on_unknown) {
-            running_flag = false;
-        }
-        std::cerr << std::format("ERROR: Unknown opcode: {:04X}\n", opcode);
+        unknown_opcode(opcode);
     }
 }
 
 
 void Chip8::opcode_00E0(uint16_t opcode) {
-    if (debug) {
-        std::cout << std::format("DEBUG: Called {:04X}: Clear display\n", opcode);
-    }
+    if (debug) std::cout << std::format("DEBUG: Called {:04X}: Clear display\n", opcode);
+
     memset(display, 0, sizeof(uint8_t) * LOGICAL_WIDTH * LOGICAL_HEIGHT);
     draw_flag = true;
 }
 
 
 void Chip8::opcode_00EE(uint16_t opcode) {
-    if (debug) {
-        std::cout << std::format("DEBUG: Called {:04X}: Return from subroutine\n", opcode);
-    }
+    if (debug) std::cout << std::format("DEBUG: Called {:04X}: Return from subroutine\n", opcode);
+
     if (SP == 0) {
         std::cerr << "ERROR: Attempted stack underflow.\n";
         running_flag = false;
@@ -103,18 +105,16 @@ void Chip8::opcode_00EE(uint16_t opcode) {
 
 void Chip8::opcode_1NNN(uint16_t opcode) {
     uint16_t NNN = opcode & 0x0FFF;
-    if (debug) {
-        std::cout << std::format("DEBUG: Called {:04X}: Jump to {:03X}X\n", opcode, NNN);
-    }
+    if (debug) std::cout << std::format("DEBUG: Called {:04X}: Jump to {:03X}X\n", opcode, NNN);
+
     PC = NNN;
 }
 
 void Chip8::opcode_2NNN(uint16_t opcode) {
     uint16_t NNN = opcode & 0x0FFF;
 
-    if (debug) {
-        std::cout << std::format("DEBUG: Called {:04X}: Call subroutine at {:03X}X\n", opcode, NNN);
-    }
+    if (debug) std::cout << std::format("DEBUG: Called {:04X}: Call subroutine at {:03X}X\n", opcode, NNN);
+
     if (SP >= STACK_SIZE) {
         std::cerr << "ERROR: Attempted stack overflow.\n";
         running_flag = false;
@@ -128,6 +128,7 @@ void Chip8::opcode_2NNN(uint16_t opcode) {
 void Chip8::opcode_3XNN(uint16_t opcode) {
     uint8_t X = (opcode & 0x0F00) >> 8;
     uint8_t NN = opcode & 0x00FF;
+
     if (debug) {
         std::cout << std::format("DEBUG: Called {:04X}: Skip next instruction if V{:01X} ({:02X}) == {:02X}",
                                  opcode, X, V[X], NN);
@@ -152,6 +153,11 @@ void Chip8::opcode_4XNN(uint16_t opcode) {
 void Chip8::opcode_5XY0(uint16_t opcode) {
     uint8_t X = (opcode & 0x0F00) >> 8;
     uint8_t Y = (opcode & 0x00F0) >> 4;
+    if ((opcode & 0x000F) != 0) {
+        unknown_opcode(opcode);
+        return;
+    }
+
     if (debug) {
         std::cout << std::format("DEBUG: Called {:04X}: Skip next instruction if V{:01X} ({:02X}) = V{:01X} ({:02X})\n",
                                  opcode, X, V[X], Y, V[Y]);
@@ -165,9 +171,8 @@ void Chip8::opcode_5XY0(uint16_t opcode) {
 void Chip8::opcode_6XNN(uint16_t opcode) {
     uint8_t X = (opcode & 0x0F00) >> 8;
     uint8_t NN = opcode & 0x00FF;
-    if (debug) {
-        std::cout << std::format("DEBUG: Called {:04X}: Set V{:01X} = {:02X}\n", opcode, X, NN);
-    }
+    if (debug) std::cout << std::format("DEBUG: Called {:04X}: Set V{:01X} = {:02X}\n", opcode, X, NN);
+
     V[X] = NN;
 }
 
@@ -252,11 +257,17 @@ void Chip8::opcode_8XY_(uint16_t opcode) {
 void Chip8::opcode_9XY0(uint16_t opcode) {
     uint8_t X = (opcode & 0x0F00) >> 8;
     uint8_t Y = (opcode & 0x00F0) >> 4;
-    if (debug) {
-        std::cout
-                << std::format("DEBUG: Called {:04X}: Skip next instruction if V{:01X} ({:02X}) != V{:01X} ({:02X})\n",
-                               opcode, X, V[X], Y, V[Y]);
+
+    if ((opcode & 0x000F) != 0) {
+        unknown_opcode(opcode);
+        return;
     }
+
+    if (debug)
+        std::cout << std::format(
+                "DEBUG: Called {:04X}: Skip next instruction if V{:01X} ({:02X}) != V{:01X} ({:02X})\n",
+                opcode, X, V[X], Y, V[Y]);
+
     if (V[X] != V[Y]) {
         PC += 2;
     }
@@ -264,9 +275,8 @@ void Chip8::opcode_9XY0(uint16_t opcode) {
 
 void Chip8::opcode_ANNN(uint16_t opcode) {
     uint16_t NNN = opcode & 0x0FFF;
-    if (debug) {
-        std::cout << std::format("DEBUG: Called {:04X}: Set I = {:03X}X\n", opcode, NNN);
-    }
+    if (debug) std::cout << std::format("DEBUG: Called {:04X}: Set I = {:03X}X\n", opcode, NNN);
+
     I = NNN;
 }
 
@@ -274,7 +284,6 @@ void Chip8::opcode_CXNN(uint16_t opcode) {
     static std::random_device rd;
     static std::mt19937 gen{rd()};
     static std::uniform_int_distribution<uint8_t> dis;
-
 
     uint8_t X = (opcode & 0x0F00) >> 8;
     uint8_t NN = opcode & 0x00FF;
@@ -284,9 +293,8 @@ void Chip8::opcode_CXNN(uint16_t opcode) {
 }
 
 void Chip8::opcode_DXYN(uint16_t opcode) {
-    if (debug) {
-        std::cout << std::format("DEBUG: Called {:04X}: Draw\n", opcode);
-    }
+    if (debug) std::cout << std::format("DEBUG: Called {:04X}: Draw\n", opcode);
+
     uint8_t X = (opcode & 0x0F00) >> 8;
     uint8_t Y = (opcode & 0x00F0) >> 4;
     uint8_t N = opcode & 0x000F;
@@ -358,10 +366,7 @@ void Chip8::opcode_FX_(uint16_t opcode) {
             opcode_FX65(X);
             break;
         default:
-            if (exit_on_unknown) {
-                running_flag = false;
-            }
-            std::cerr << std::format("ERROR: Unknown opcode: {:04X}\n", opcode);
+            unknown_opcode(opcode);
     }
 
 }
@@ -401,7 +406,8 @@ void Chip8::opcode_FX1E(uint8_t X) {
 
 void Chip8::opcode_FX29(uint8_t X) {
     if (debug)
-        std::cout << std::format("DEBUG: Called F{:01X}29: Set I = address of font character in V{:01X}\n", X, X);
+        std::cout << std::format("DEBUG: Called F{:01X}29: Set I = address of font character in V{:01X}\n",
+                                 X, X);
     I = FONT_START + (X * 5);
 }
 
@@ -423,8 +429,11 @@ void Chip8::opcode_FX55(uint8_t X) {
 }
 
 void Chip8::opcode_FX65(uint8_t X) {
-    if (debug)
-        std::cout << std::format("DEBUG: Called F{:01X}55: Load memory[I] into registers V[0] to V{:01X} \n", X, X);
+    if (debug) {
+        std::cout << std::format("DEBUG: Called F{:01X}55: Load memory[I] into registers V[0] to V{:01X} \n",
+                                 X, X);
+    }
+
     memcpy(V, &memory[I], (X + 1) * sizeof(uint8_t));
     if (increment_I_on_index) I += X + 1;
 }
@@ -482,7 +491,6 @@ void Chip8::update_inputs() {
             if (e.key.scancode == STEP_BUTTON) {
                 execute_next = true;
             }
-
 
             for (int i = 0; i < KEY_COUNT; i++) {
                 if (e.key.scancode == KEYMAP[i]) {
