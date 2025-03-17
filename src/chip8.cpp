@@ -130,7 +130,7 @@ void Chip8::opcode_3XNN(uint16_t opcode) {
     uint8_t NN = opcode & 0x00FF;
 
     if (debug) {
-        std::cout << std::format("DEBUG: Called {:04X}: Skip next instruction if V{:01X} ({:02X}) == {:02X}",
+        std::cout << std::format("DEBUG: Called {:04X}: Skip next instruction if V{:01X} ({:02X}) == {:02X}\n",
                                  opcode, X, V[X], NN);
     }
     if (V[X] == NN) {
