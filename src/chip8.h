@@ -171,6 +171,12 @@ private:
     //DXYN Draw
     void opcode_DXYN(uint16_t opcode);
 
+    void opcode_EX_(uint16_t opcode);
+
+    void opcode_EX9E(uint8_t X);
+
+    void opcode_EXA1(uint8_t X);
+
     void opcode_FX_(uint16_t opcode);
 
     //FX07 Let VX = delay timer

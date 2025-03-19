@@ -339,6 +339,40 @@ void Chip8::opcode_DXYN(uint16_t opcode) {
     draw_flag = true;
 }
 
+void Chip8::opcode_EX_(uint16_t opcode) {
+    uint8_t opt = opcode & 0x00FF;
+    uint8_t X = (opcode & 0x0F00) >> 8;
+    switch (opt) {
+        case 0x9E:
+            opcode_EX9E(X);
+            break;
+        case 0xA1:
+            opcode_EXA1(X);
+            break;
+        default:
+            unknown_opcode(opcode);
+            break;
+    }
+}
+
+void Chip8::opcode_EX9E(uint8_t X) {
+    if (debug) std::cout << std::format("DEBUG: Called E{:01X}9E Skip if key in V{:01X} is pressed\n", X, X);
+
+    uint8_t key = V[X];
+    if (keyboard[key]) {
+        PC += 2;
+    }
+}
+
+void Chip8::opcode_EXA1(uint8_t X) {
+    if (debug) std::cout << std::format("DEBUG: Called E{:01X}9E Skip if key in V{:01X} is not pressed\n", X, X);
+
+    uint8_t key = V[X];
+    if (!keyboard[key]) {
+        PC += 2;
+    }
+}
+
 
 void Chip8::opcode_FX_(uint16_t opcode) {
     uint8_t X = (opcode & 0x0F00) >> 8;
@@ -460,6 +494,7 @@ void Chip8::load_instructions() {
     instruction_funcs[0xB] = &Chip8::opcode_BNNN;
     instruction_funcs[0xC] = &Chip8::opcode_CXNN;
     instruction_funcs[0xD] = &Chip8::opcode_DXYN;
+    instruction_funcs[0xE] = &Chip8::opcode_EX_;
     instruction_funcs[0xF] = &Chip8::opcode_FX_;
 }
 
@@ -472,7 +507,7 @@ void Chip8::draw(Screen &screen) {
 
 void Chip8::update_inputs() {
     SDL_Event e;
-    memcpy(prev_keyboard, keyboard, sizeof(uint8_t) * KEY_COUNT);
+    memcpy(prev_keyboard, keyboard, sizeof(bool) * KEY_COUNT);
     while (SDL_PollEvent(&e)) {
         if (e.type == SDL_EVENT_QUIT) {
             running_flag = false;
