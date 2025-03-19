@@ -14,7 +14,7 @@ Screen::Screen() {
 
     texture = SDL_CreateTexture(renderer,
                                 SDL_PIXELFORMAT_RGBA8888,
-                                SDL_TEXTUREACCESS_STREAMING,
+                                SDL_TEXTUREACCESS_STATIC,
                                 LOGICAL_WIDTH,
                                 LOGICAL_HEIGHT);
     SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_NEAREST);
@@ -28,23 +28,19 @@ Screen::~Screen() {
 
 }
 
-void Screen::draw(uint8_t *display) {
-    uint32_t screen[LOGICAL_WIDTH * LOGICAL_HEIGHT] = {0};
-    for (int i = 0; i < LOGICAL_WIDTH; i++) {
-        for (int j = 0; j < LOGICAL_HEIGHT; j++) {
-            if (display[i + j * LOGICAL_WIDTH] == 1) {
-                screen[i + j * LOGICAL_WIDTH] = UINT32_MAX;
-            }
-        }
+void Screen::draw(const uint8_t *display) {
+    uint32_t screen[LOGICAL_WIDTH * LOGICAL_HEIGHT];
+
+    for (int i = 0; i < LOGICAL_WIDTH * LOGICAL_HEIGHT; i++) {
+        screen[i] = (display[i] == 1) ? UINT32_MAX : 0;
     }
 
-    SDL_UpdateTexture(texture, nullptr, screen, LOGICAL_WIDTH * sizeof(uint32_t));
-    SDL_FRect position;
-    position.x = 0;
-    position.y = 0;
+    //clear renderer before drawing
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    SDL_RenderClear(renderer);
 
-    position.w = LOGICAL_WIDTH;
-    position.h = LOGICAL_HEIGHT;
+    SDL_UpdateTexture(texture, nullptr, screen, LOGICAL_WIDTH * sizeof(uint32_t));
+    SDL_FRect position = {0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT};
     SDL_RenderTexture(renderer, texture, nullptr, &position);
     SDL_RenderPresent(renderer);
 }

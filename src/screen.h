@@ -10,7 +10,7 @@ class Screen {
 public:
     Screen();
     ~Screen();
-    void draw(uint8_t *display);
+    void draw(const uint8_t *display);
 
 private:
     SDL_Window *window;
