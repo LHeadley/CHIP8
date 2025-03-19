@@ -3,6 +3,7 @@
 #include <getopt.h>
 #include <thread>
 #include "chip8.h"
+#include "audio.h"
 
 int main(int argc, char *argv[]) {
     int c;
@@ -10,7 +11,7 @@ int main(int argc, char *argv[]) {
     bool debug = false;
     bool exit_on_unknown = true;
     bool increment_I_on_index = false;
-    SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS);
+    SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_AUDIO);
 
     const struct option longopts[] = {
             {"ignore",         no_argument,       nullptr, 'e'},

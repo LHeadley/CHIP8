@@ -6,6 +6,7 @@
 
 
 Chip8::Chip8(std::string fname) {
+    audio.init_audio();
     running_flag = load_ROM(fname);
     load_instructions();
     memcpy(memory + FONT_START, FONTSET, sizeof(uint8_t) * FONTSET_SIZE);
@@ -546,5 +547,8 @@ void Chip8::update_inputs() {
 
 void Chip8::decrement_timers() {
     if (delay > 0) delay--;
-    if (sound > 0) sound--;
+    audio.is_beeping = sound > 0;
+    if (sound > 0) {
+        sound--;
+    }
 }

@@ -4,6 +4,7 @@
 #include <SDL3/SDL.h>
 #include <string>
 #include "screen.h"
+#include "audio.h"
 
 const int KEY_COUNT = 16;
 const int REGISTER_COUNT = 16;
@@ -85,6 +86,8 @@ public:
     bool isStepping() const { return stepping; }
 
 private:
+    Audio audio;
+
     bool debug = true;
     bool stepping = false;
     bool execute_next = false;
