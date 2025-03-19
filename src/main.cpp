@@ -53,10 +53,12 @@ int main(int argc, char *argv[]) {
     Screen screen;
 
     while (chip8.isRunning()) {
-        auto frame_start = std::chrono::high_resolution_clock::now();
         chip8.update_inputs();
+        chip8.decrement_timers();
+
+        auto frame_start = std::chrono::high_resolution_clock::now();
         if (!chip8.isStepping()) {
-            for (int i = 0; i < ipf; ++i) {
+            for (int i = 0; i < ipf && !chip8.is_draw_flag(); ++i) {
                 chip8.execute_loop();
             }
         } else if (chip8.should_execute_next()) {
@@ -64,10 +66,9 @@ int main(int argc, char *argv[]) {
         }
 
         chip8.draw(screen);
-        chip8.decrement_timers();
 
         if (!chip8.isStepping()) {
-            std::this_thread::sleep_until(frame_start + std::chrono::milliseconds(16));
+            std::this_thread::sleep_until(frame_start + std::chrono::nanoseconds (16666667));
         }
     }
 

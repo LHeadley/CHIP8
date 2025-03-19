@@ -85,6 +85,8 @@ public:
 
     bool isStepping() const { return stepping; }
 
+    bool is_draw_flag() const {return draw_flag;}
+
 private:
     Audio audio;
 
