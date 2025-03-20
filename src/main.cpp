@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
                 ipf = atoi(optarg);
                 break;
             case 'c':
-                increment_I_on_index = true;
+                increment_I_on_index = false;
                 break;
             default:
                 abort();
