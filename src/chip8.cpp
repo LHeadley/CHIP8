@@ -203,14 +203,17 @@ void Chip8::opcode_8XY_(uint16_t opcode) {
         case 0x1: //Set VX = VX | VY
             debug_str = std::format("DEBUG: Called {:04X}: Set V{:01X} |= V{:01X}\n", opcode, X, Y);
             V[X] |= V[Y];
+            V[0xF] = 0;
             break;
         case 0x2: //Set VX = VX & VY
             debug_str = std::format("DEBUG: Called {:04X}: Set V{:01X} &= V{:01X}\n", opcode, X, Y);
             V[X] &= V[Y];
+            V[0xF] = 0;
             break;
         case 0x3: //Set VX = VX ^ VY
             debug_str = std::format("DEBUG: Called {:04X}: Set V{:01X} ^= V{:01X}\n", opcode, X, Y);
             V[X] ^= V[Y];
+            V[0xF] = 0;
             break;
         case 0x4: //Set VX = VX + VY and set VF = 1 if overflow
             debug_str = std::format("DEBUG: Called {:04X}: Set V{:01X} += V{:01X}\n", opcode, X, Y);
@@ -450,7 +453,7 @@ void Chip8::opcode_FX29(uint8_t X) {
     if (debug)
         std::cout << std::format("DEBUG: Called F{:01X}29: Set I = address of font character in V{:01X}\n",
                                  X, X);
-    I = FONT_START + (X * 5);
+    I = FONT_START + ((V[X] & 0x0F)  * 5);
 }
 
 
