@@ -10,15 +10,15 @@ int main(int argc, char *argv[]) {
     int ipf = 11;
     bool debug = false;
     bool exit_on_unknown = true;
-    bool increment_I_on_index = false;
+    bool increment_I_on_index = true;
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_AUDIO);
 
     const struct option longopts[] = {
-            {"ignore",         no_argument,       nullptr, 'e'},
-            {"debug",          no_argument,       nullptr, 'd'},
-            {"ipf",            required_argument, nullptr, 'i'},
-            {"inc-i-on-index", no_argument,       nullptr, 'c'},
-            {nullptr,          0,                 nullptr, 0}
+            {"ignore",            no_argument,       nullptr, 'e'},
+            {"debug",             no_argument,       nullptr, 'd'},
+            {"ipf",               required_argument, nullptr, 'i'},
+            {"no-inc-i-on-index", no_argument,       nullptr, 'c'},
+            {nullptr,             0,                 nullptr, 0}
     };
 
     int index;
@@ -68,7 +68,7 @@ int main(int argc, char *argv[]) {
         chip8.draw(screen);
 
         if (!chip8.isStepping()) {
-            std::this_thread::sleep_until(frame_start + std::chrono::nanoseconds (16666667));
+            std::this_thread::sleep_until(frame_start + std::chrono::nanoseconds(16666667));
         }
     }
 

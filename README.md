@@ -8,7 +8,7 @@ Make using cmake and run with `.\CHIP8 [options] rom.ch8`. Valid options are:
 - `-d` enables debug output
 - `-i` <ipf> sets the instruction count per frame to <ipf>. Default value is 11. 
 - `-ignore` if set, unknown instructions will be ignored. Otherwise, unknown instructions will cause the interpreter to quit.
-- `-inc-i-on-index` if set, I will be incremented when performing FX55 or FX65. Otherwise, a temporary indexing variable will be used, and I will be unchanged.   
+- `-no-inc-i-on-index` if set, I will not be incremented when performing FX55 or FX65 and a temporary indexing variable will be used instead. Otherwise, I will change after calls to FX55 and FX65.  
 
 When running, press escape to exit. Pressing space will pause execution, and pressing the right arrow key will then allow for running one instruction at a time.z 
 
